@@ -50,7 +50,7 @@ def regression_analysis_other_sheets(df, output_dir):
         df['Predicted assembling time'] = np.nan
         df.loc[mask.index, 'Predicted assembling time'] = predictions
 
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(15, 6))
         plt.plot(df.index[mask], y, label='Фактическое время', marker='o')
         plt.plot(df.index[mask], predictions, label='Предсказанное время', linestyle='--', marker='x')
 
