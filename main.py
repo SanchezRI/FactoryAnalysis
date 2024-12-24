@@ -73,42 +73,30 @@ def fuzzy_quality_assessment(df):
         print("Обнаружены отсутствующие значения в данных. Пропускаем нечеткий анализ.")
         return
 
-    # Определяем диапазоны
+    # Определяем диапазоны для функций принадлежности
     x_quality = np.arange(0, 101, 1)
 
-    # Членства
+    # Членства для времени выгрузки
     unloading_low = fuzz.trimf(x_quality, [0, 0, 50])
     unloading_medium = fuzz.trimf(x_quality, [0, 50, 100])
     unloading_high = fuzz.trimf(x_quality, [50, 100, 100])
 
-    loading_low = fuzz.trimf(x_quality, [0, 0, 50])
-    loading_medium = fuzz.trimf(x_quality, [0, 50, 100])
-    loading_high = fuzz.trimf(x_quality, [50, 100, 100])
-
-    waiting_low = fuzz.trimf(x_quality, [0, 0, 50])
-    waiting_medium = fuzz.trimf(x_quality, [0, 50, 100])
-    waiting_high = fuzz.trimf(x_quality, [50, 100, 100])
-
-    # Определяем массив для хранения результатов оценки качества
     quality_assessments = []
 
-    # Применение нечетких правил
     for i in range(len(df)):
         unloading_lvl = fuzz.interp_membership(x_quality, unloading_low, unloading_time[i])
-        loading_lvl = fuzz.interp_membership(x_quality, loading_low, loading_time[i])
-        waiting_lvl = fuzz.interp_membership(x_quality, waiting_low, waiting_time[i])
 
-        # Применение нечетких правил
-        quality_activation_good = np.fmax(unloading_lvl, loading_lvl)
-        quality_activation_average = np.fmax(waiting_lvl, unloading_lvl)
-        quality_activation_poor = np.fmax(waiting_lvl, loading_lvl)
 
-        # Финальное качество
-        aggregated_quality = np.fmax(quality_activation_good,
-                                      np.fmax(quality_activation_average, quality_activation_poor))
+        quality_activation_good = unloading_lvl
+        quality_activation_average = unloading_lvl
+        quality_activation_poor = unloading_lvl
 
-        # Проверяем длины перед вызовом defuzz
-        if len(x_quality) == aggregated_quality:
+        aggregated_quality = np.fmax(
+            quality_activation_good,
+            np.fmax(quality_activation_average, quality_activation_poor)
+        )
+
+        if len(x_quality) == 1:
             quality_result = fuzz.defuzz(x_quality, aggregated_quality, 'centroid')
             quality_assessments.append(quality_result)
         else:
