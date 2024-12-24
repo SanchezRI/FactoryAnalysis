@@ -4,8 +4,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
 import matplotlib
-
 matplotlib.use('Agg')
+
+###############################################################################################################
+# Developed by: Golubev Max, Bulatnikov Ivan, Matvei Klevcov, Matvey Klevtsov, Danila Pashkov, Daniil Khvatov #
+###############################################################################################################
 
 
 # Анализ и предобработка данных
@@ -52,7 +55,7 @@ def regression_analysis(df):
     plt.close()  # Закрываем фигуру
 
 
-# Генерация отчетов и визуализация результатов
+# Генерация отчетов
 def generate_report(df):
     # Генерация базового отчета
     report = df.describe().transpose()
