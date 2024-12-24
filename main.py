@@ -107,8 +107,13 @@ def fuzzy_quality_assessment(df):
         aggregated_quality = np.fmax(quality_activation_good,
                                       np.fmax(quality_activation_average, quality_activation_poor))
 
-        quality_result = fuzz.defuzz(x_quality, aggregated_quality, 'centroid')
-        quality_assessments.append(quality_result)
+        # Проверяем длины перед вызовом defuzz
+        if len(x_quality) == aggregated_quality:
+            quality_result = fuzz.defuzz(x_quality, aggregated_quality, 'centroid')
+            quality_assessments.append(quality_result)
+        else:
+            print(f"Ошибка: длины массивов не совпадают (x_quality: {len(x_quality)}, aggregated_quality: {aggregated_quality}).")
+            quality_assessments.append(np.nan)  # Добавляем NaN для отсутствующей оценки
 
     df['Quality Assessment'] = quality_assessments
 
