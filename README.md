@@ -41,3 +41,5 @@ ________________________________________________________________________________
 Predicted and actual time graphics. Correlation data from List1:
 ![img.png](data/results_img/predicted_vs_actual_Лист1.png "Pic.1.")
 ![img.png](data/results_img/correlation_heatmap_Лист1.png "Pic.1.")
+
+P.s. See fuzzy_logic_branch for using fuzzy logic algorithms in project.

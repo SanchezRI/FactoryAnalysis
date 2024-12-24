@@ -6,12 +6,9 @@ from sklearn.linear_model import LinearRegression
 import matplotlib
 import os
 import argparse
+import skfuzzy as fuzz
 matplotlib.use('Agg')
 
-
-###############################################################################################################
-# Developed by: Golubev Max, Bulatnikov Ivan, Matvei Klevcov, Matvey Klevtsov, Danila Pashkov, Daniil Khvatov #
-###############################################################################################################
 
 def analyze_data(df, output_dir):
     print("Основные статистики:")
@@ -22,7 +19,7 @@ def analyze_data(df, output_dir):
         plt.figure(figsize=(10, 6))
         sns.heatmap(numerical_df.corr(), annot=True, fmt=".2f")
         plt.title("Корреляция между процессами")
-        plt.savefig(os.path.join(output_dir, f'correlation_heatmap_{df.name}.png'))  # Сохранение графика в файл
+        plt.savefig(os.path.join(output_dir, f'correlation_heatmap_{df.name}.png'))
         plt.close()
     else:
         print("Нет числовых данных для анализа корреляции.")
@@ -62,8 +59,58 @@ def regression_analysis_other_sheets(df, output_dir):
         plt.xlabel('Индекс')
         plt.ylabel('Время сборки')
         plt.grid()
-        plt.savefig(os.path.join(output_dir, f'predicted_vs_actual_{df.name}.png'))  # Сохранение графика в файл
+        plt.savefig(os.path.join(output_dir, f'predicted_vs_actual_{df.name}.png'))
         plt.close()
+
+
+def fuzzy_quality_assessment(df):
+    unloading_time = df['Truck unloading mean time'].values
+    loading_time = df['Truck loading mean time'].values
+    waiting_time = df['Order loading mean waiting time'].values
+
+    # Проверка на наличие отсутствующих значений
+    if np.any(np.isnan(unloading_time)) or np.any(np.isnan(loading_time)) or np.any(np.isnan(waiting_time)):
+        print("Обнаружены отсутствующие значения в данных. Пропускаем нечеткий анализ.")
+        return
+
+    # Определяем диапазоны
+    x_quality = np.arange(0, 101, 1)
+
+    # Членства
+    unloading_low = fuzz.trimf(x_quality, [0, 0, 50])
+    unloading_medium = fuzz.trimf(x_quality, [0, 50, 100])
+    unloading_high = fuzz.trimf(x_quality, [50, 100, 100])
+
+    loading_low = fuzz.trimf(x_quality, [0, 0, 50])
+    loading_medium = fuzz.trimf(x_quality, [0, 50, 100])
+    loading_high = fuzz.trimf(x_quality, [50, 100, 100])
+
+    waiting_low = fuzz.trimf(x_quality, [0, 0, 50])
+    waiting_medium = fuzz.trimf(x_quality, [0, 50, 100])
+    waiting_high = fuzz.trimf(x_quality, [50, 100, 100])
+
+    # Определяем массив для хранения результатов оценки качества
+    quality_assessments = []
+
+    # Применение нечетких правил
+    for i in range(len(df)):
+        unloading_lvl = fuzz.interp_membership(x_quality, unloading_low, unloading_time[i])
+        loading_lvl = fuzz.interp_membership(x_quality, loading_low, loading_time[i])
+        waiting_lvl = fuzz.interp_membership(x_quality, waiting_low, waiting_time[i])
+
+        # Применение нечетких правил
+        quality_activation_good = np.fmax(unloading_lvl, loading_lvl)
+        quality_activation_average = np.fmax(waiting_lvl, unloading_lvl)
+        quality_activation_poor = np.fmax(waiting_lvl, loading_lvl)
+
+        # Финальное качество
+        aggregated_quality = np.fmax(quality_activation_good,
+                                      np.fmax(quality_activation_average, quality_activation_poor))
+
+        quality_result = fuzz.defuzz(x_quality, aggregated_quality, 'centroid')
+        quality_assessments.append(quality_result)
+
+    df['Quality Assessment'] = quality_assessments
 
 
 def generate_report(df, output_dir):
@@ -85,7 +132,7 @@ if __name__ == '__main__':
     all_data = []
 
     for sheet in sheets:
-        df = pd.read_excel("/home/tango-home/PycharmProjects/FactoryAnalysis/data/data_model.xlsx", sheet_name=sheet)
+        df = pd.read_excel("data/data_model.xlsx", sheet_name=sheet)
 
         df = df.dropna(axis=1, how='all')
 
@@ -98,6 +145,8 @@ if __name__ == '__main__':
         analyze_data(df, args.output_dir)
 
         regression_analysis_other_sheets(df, args.output_dir)
+
+        fuzzy_quality_assessment(df)
 
         generate_report(df, args.output_dir)
 
