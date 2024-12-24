@@ -4,12 +4,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
 import matplotlib
+
 matplotlib.use('Agg')
+
 
 ###############################################################################################################
 # Developed by: Golubev Max, Bulatnikov Ivan, Matvei Klevcov, Matvey Klevtsov, Danila Pashkov, Daniil Khvatov #
 ###############################################################################################################
-
 
 # Анализ и предобработка данных
 def analyze_data(df):
@@ -64,12 +65,31 @@ def generate_report(df):
 
 
 if __name__ == '__main__':
-    df = pd.read_excel("/home/tango-home/PycharmProjects/FactoryAnalysis/data/data_model.xlsx")
-    print(df.columns)
+    # Список листов для обработки
+    sheets = ["Лист1", "Лист2", "Лист3", "Лист4"]
+    all_data = []
 
-    df.columns = df.columns.str.strip()
+    for sheet in sheets:
+        df = pd.read_excel("/home/tango-home/PycharmProjects/FactoryAnalysis/data/data_model.xlsx", sheet_name=sheet)
 
-    # Запуск анализа
-    analyze_data(df)
-    regression_analysis(df)
-    generate_report(df)
+        # Удаление пустых столбцов
+        df = df.dropna(axis=1, how='all')
+
+        print(f"Обрабатываемый лист: {sheet}")
+        print(df.columns)
+
+        # Убираем пробелы из названий столбцов
+        df.columns = df.columns.str.strip()
+
+        # Запуск анализа
+        analyze_data(df)
+        regression_analysis(df)
+        generate_report(df)
+
+        all_data.append(df)  # Сохраняем данные всех листов, если нужно
+
+    # Если нужен общий отчёт по всем листам
+    combined_data = pd.concat(all_data, ignore_index=True)
+    combined_report = combined_data.describe().transpose()
+    combined_report.to_csv('combined_report.csv')
+    print("Общий отчет сохранен в combined_report.csv")
