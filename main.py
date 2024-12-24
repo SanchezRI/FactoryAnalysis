@@ -6,7 +6,6 @@ from sklearn.linear_model import LinearRegression
 import matplotlib
 import os
 import argparse
-
 matplotlib.use('Agg')
 
 

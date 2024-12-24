@@ -6,7 +6,7 @@ Factory Analysis
 _________________________________________________________________________________________________________________________________________
 ## Prerequirements
 - Python => 3.12
-- Data from Anilogic model (/data/data_model.xlsx)
+- Data from Anilogic model (See /data/data_model.xlsx)
 _________________________________________________________________________________________________________________________________________
 ## Installation
 Check python's version and go to Project Directory
