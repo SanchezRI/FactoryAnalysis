@@ -17,55 +17,100 @@ def analyze_data(df):
     print("Основные статистики:")
     print(df.describe())
 
-    # Визуализация зависимости между процессами
-    plt.figure(figsize=(10, 6))
-    sns.heatmap(df.corr(), annot=True, fmt=".2f")
-    plt.title("Корреляция между процессами")
-    plt.savefig('correlation_heatmap.png')  # Сохранение графика в файл
-    plt.close()  # Закрываем фигуру
+    # Выбираем только числовые столбцы для корреляции
+    numerical_df = df.select_dtypes(include=[np.number])
+    if not numerical_df.empty:
+        # Визуализация зависимости между процессами
+        plt.figure(figsize=(10, 6))
+        sns.heatmap(numerical_df.corr(), annot=True, fmt=".2f")
+        plt.title("Корреляция между процессами")
+        plt.savefig(f'correlation_heatmap_{df.name}.png')  # Сохранение графика в файл
+        plt.close()  # Закрываем фигуру
+    else:
+        print("Нет числовых данных для анализа корреляции.")
 
 
-# Моделирование
-def regression_analysis(df):
-    # Пример регрессии для прогнозирования времени обработки
+# Проверка и очистка названий столбцов
+def clean_column_names(df):
+    df.columns = df.columns.str.strip()  # Удаляем лишние пробелы
+    print("Названия столбцов после очистки:")
+    print(df.columns)
+
+
+# # Моделирование для Листа 1
+# def regression_analysis_sheet1(df):
+#     # Пример регрессии для прогнозирования времени обработки
+#     X = df[['Truck unloading mean time', 'Truck loading mean time', 'Order loading mean waiting time']]
+#     y = df['Order assembling mean time']
+#
+#     # Проверяем на наличие NaN и убираем их
+#     mask = X.notna().all(axis=1) & y.notna()
+#     X = X[mask]
+#     y = y[mask]
+#
+#     if not X.empty and len(y) == len(X):
+#         model = LinearRegression()
+#         model.fit(X, y)
+#
+#         # Прогнозирование
+#         predictions = model.predict(X)
+#         df['Predicted assembling time'] = np.nan  # Создаем новый столбец с NaN
+#         df.loc[mask.index, 'Predicted assembling time'] = predictions  # Заполняем прогнозами
+#
+#         # Визуализация
+#         plt.figure(figsize=(10, 6))
+#         plt.plot(df.index[mask], y, label='Фактическое время', marker='o')
+#         plt.plot(df.index[mask], predictions, label='Предсказанное время', linestyle='--', marker='x')
+#         plt.legend()
+#         plt.title('Сравнение фактического и предсказанного времени сборки заказов для Листа 1')
+#         plt.xlabel('Индекс')
+#         plt.ylabel('Время сборки')
+#         plt.savefig(f'predicted_vs_actual_L1.png')  # Сохранение графика в файл
+#         plt.close()  # Закрываем фигуру
+
+
+# Моделирование для Листов 1, 2, 3 и 4
+def regression_analysis_other_sheets(df):
+    # Вывод названий столбцов для диагностики
+    print("Названия столбцов для регрессии:")
+    print(df.columns)
+
     X = df[['Truck unloading mean time', 'Truck loading mean time', 'Order loading mean waiting time']]
-    y = df['Order assembling mean time'].dropna()  # Убедитесь, что нет NaN значений
+    y = df['Order assembling mean time']
 
-    # Убираем строки, где отсутствуют значения в X или y
-    common_indices = X.index.intersection(y.index)
+    mask = X.notna().all(axis=1) & y.notna()
+    X = X[mask]
+    y = y[mask]
 
-    X = X.loc[common_indices]
-    y = y.loc[common_indices]
+    if not X.empty and len(y) == len(X):
+        model = LinearRegression()
+        model.fit(X, y)
 
-    model = LinearRegression()
-    model.fit(X, y)
+        predictions = model.predict(X)
+        df['Predicted assembling time'] = np.nan
+        df.loc[mask.index, 'Predicted assembling time'] = predictions
 
-    # Прогнозирование
-    predictions = model.predict(X)
-    df['Predicted assembling time'] = np.nan  # Создаем новый столбец с NaN
-    df.loc[common_indices, 'Predicted assembling time'] = predictions  # Заполняем прогнозами
+        plt.figure(figsize=(10, 6))
+        plt.plot(df.index[mask], y, label='Фактическое время', marker='o')
+        plt.plot(df.index[mask], predictions, label='Предсказанное время', linestyle='--', marker='x')
 
-    # Визуализация
-    plt.plot(df['Order assembling mean time'], label='Фактическое время')
-    plt.plot(df['Predicted assembling time'], label='Предсказанное время', linestyle='--')
-    plt.legend()
-    plt.title('Сравнение фактического и предсказанного времени сборки заказов')
-    plt.xlabel('Индекс')
-    plt.ylabel('Время сборки')
-    plt.savefig('predicted_vs_actual.png')  # Сохранение графика в файл
-    plt.close()  # Закрываем фигуру
+        plt.legend()
+        plt.title(f'Сравнение фактического и предсказанного времени сборки заказов для {df.name}')
+        plt.xlabel('Индекс')
+        plt.ylabel('Время сборки')
+        plt.grid()
+        plt.savefig(f'predicted_vs_actual_{df.name}.png')  # Сохранение графика в файл
+        plt.close()
 
 
 # Генерация отчетов
 def generate_report(df):
-    # Генерация базового отчета
     report = df.describe().transpose()
-    report.to_csv('report.csv')
-    print("Отчет сохранен в report.csv")
+    report.to_csv(f'report_{df.name}.csv')
+    print(f"Отчет сохранен в report_{df.name}.csv")
 
 
 if __name__ == '__main__':
-    # Список листов для обработки
     sheets = ["Лист1", "Лист2", "Лист3", "Лист4"]
     all_data = []
 
@@ -76,19 +121,19 @@ if __name__ == '__main__':
         df = df.dropna(axis=1, how='all')
 
         print(f"Обрабатываемый лист: {sheet}")
-        print(df.columns)
 
-        # Убираем пробелы из названий столбцов
-        df.columns = df.columns.str.strip()
+        clean_column_names(df)  # Очистка названий столбцов
 
-        # Запуск анализа
+        df.name = sheet
+
         analyze_data(df)
-        regression_analysis(df)
+
+        regression_analysis_other_sheets(df)
+
         generate_report(df)
 
-        all_data.append(df)  # Сохраняем данные всех листов, если нужно
+        all_data.append(df)
 
-    # Если нужен общий отчёт по всем листам
     combined_data = pd.concat(all_data, ignore_index=True)
     combined_report = combined_data.describe().transpose()
     combined_report.to_csv('combined_report.csv')
