@@ -39,7 +39,7 @@ def regression_analysis_other_sheets(df, output_dir):
     print("Названия столбцов для регрессии:")
     print(df.columns)
 
-    X = df[['Truck unloading mean time', 'Truck loading mean time', 'Order loading mean waiting time']]
+    X = df[['Truck unloading mean time', 'Truck loading mean time', 'Mean pallet put time', 'Mean pallet pickup time']]
     y = df['Order assembling mean time']
 
     mask = X.notna().all(axis=1) & y.notna()
